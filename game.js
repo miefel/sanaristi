@@ -403,6 +403,9 @@ KIRJAIMEN SYÖTTÖ
 
 function handleKeyboardInput(event) {
 
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
     if (!selectedCell) {
         return;
     }
@@ -424,6 +427,8 @@ function handleKeyboardInput(event) {
     if (!/^[a-zåäö]$/i.test(character)) {
 
         event.target.value = "";
+
+        window.scrollTo(scrollX, scrollY);
 
         return;
     }
@@ -450,7 +455,10 @@ function handleKeyboardInput(event) {
     saveGame();
 
     moveNext();
+
+    window.scrollTo(scrollX, scrollY);
 }
+
 
 
 /*
