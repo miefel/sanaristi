@@ -847,3 +847,23 @@ ALOITA
 
 loadPuzzles();
 
+/*
+============================================================
+AUTOMAATTINEN PÄIVÄN VAIHTUMINEN
+============================================================
+*/
+
+let currentDay = getDayNumber();
+
+setInterval(() => {
+
+    const newDay = getDayNumber();
+
+    if (newDay !== currentDay) {
+
+        currentDay = newDay;
+
+        selectDailyPuzzle();
+    }
+
+}, 30000);
