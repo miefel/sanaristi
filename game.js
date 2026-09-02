@@ -82,7 +82,7 @@ async function loadPuzzles() {
     try {
 
         const response =
-            await fetch("../sanaristit/sanaristit.json");
+            await fetch("sanaristit/sanaristit.json");
 
         if (!response.ok) {
 
