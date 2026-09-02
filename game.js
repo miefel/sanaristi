@@ -384,13 +384,14 @@ function focusKeyboard() {
 
     keyboardInput.value = "";
 
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
+    lockPagePosition();
+
 
     keyboardInput.focus({
     preventScroll: true
 });
-window.scrollTo(scrollX, scrollY);
+restorePagePosition();
+
 
 }
 
@@ -836,3 +837,37 @@ ALOITA
 */
 
 loadPuzzles();
+
+let lockedScrollX = 0;
+let lockedScrollY = 0;
+let keyboardIsOpen = false;
+
+function lockPagePosition() {
+    lockedScrollX = window.scrollX;
+    lockedScrollY = window.scrollY;
+    keyboardIsOpen = true;
+}
+
+function restorePagePosition() {
+    if (!keyboardIsOpen) {
+        return;
+    }
+
+    window.scrollTo(
+        lockedScrollX,
+        lockedScrollY
+    );
+}
+
+if (window.visualViewport) {
+
+    window.visualViewport.addEventListener(
+        "resize",
+        restorePagePosition
+    );
+
+    window.visualViewport.addEventListener(
+        "scroll",
+        restorePagePosition
+    );
+}
