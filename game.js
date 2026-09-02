@@ -384,7 +384,10 @@ function focusKeyboard() {
 
     keyboardInput.value = "";
 
-    keyboardInput.focus();
+    keyboardInput.focus({
+    preventScroll: true
+});
+
 }
 
 
