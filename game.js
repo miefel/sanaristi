@@ -16,6 +16,8 @@ const START_DATE = new Date("2026-09-02T00:00:00");
 
 const STORAGE_KEY = "sanaristi_peli";
 
+let hintCount = 0;
+
 
 /*
 ============================================================
@@ -47,6 +49,32 @@ function getDayNumber() {
     );
 }
 
+function updateDateInfo() {
+
+    const dateInfo =
+        document.getElementById("dateInfo");
+
+    const today =
+        new Date();
+
+    const options = {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    };
+
+    const dateText =
+        today.toLocaleDateString(
+            "fi-FI",
+            options
+        );
+
+    const puzzleNumber =
+        getDayNumber() + 1;
+
+    dateInfo.textContent =
+        `${dateText} · #${puzzleNumber}`;
+}
 
 /*
 ============================================================
@@ -68,6 +96,8 @@ function selectDailyPuzzle() {
     createGrid();
 
     loadSavedGame();
+
+    updateDateInfo();
 }
 
 
@@ -194,8 +224,10 @@ function saveGame() {
         const key =
             `${cell.dataset.row},${cell.dataset.column}`;
 
-        values[key] =
-            cell.dataset.value || "";
+        values[key] = {
+            value: cell.dataset.value || "",
+            hint: cell.classList.contains("hint")
+        };
     });
 
 
@@ -253,23 +285,44 @@ function loadSavedGame() {
         const cells =
             [...document.querySelectorAll(".cell.input")];
 
+        hintCount = 0;
+
         cells.forEach(cell => {
 
             const key =
                 `${cell.dataset.row},${cell.dataset.column}`;
 
-            const value =
+            const savedCell =
                 gameData.values[key];
 
-            if (value) {
+            if (savedCell) {
 
-                cell.dataset.value =
-                    value;
+                if (typeof savedCell === "string") {
 
-                cell.textContent =
-                    value.toUpperCase();
+                    cell.dataset.value =
+                        savedCell;
+
+                    cell.textContent =
+                        savedCell.toUpperCase();
+
+                } else if (savedCell.value) {
+
+                    cell.dataset.value =
+                        savedCell.value;
+
+                    cell.textContent =
+                        savedCell.value.toUpperCase();
+
+                    if (savedCell.hint) {
+
+                        cell.classList.add("hint");
+                        hintCount++;
+                    }
+                }
             }
+
         });
+
 
 
         if (gameData.solved) {
@@ -312,7 +365,9 @@ function selectCell(cell) {
     if (!cell.classList.contains("input")) {
         return;
     }
-
+    if (cell.classList.contains("hint")) {
+        return;
+    }
     document
         .querySelectorAll(".cell.input")
         .forEach(cell => {
@@ -417,6 +472,13 @@ KIRJAIMEN SYÖTTÖ
 
 function handleKeyboardInput(event) {
 
+    if (
+        selectedCell &&
+        selectedCell.classList.contains("hint")
+    ) {
+        event.target.value = "";
+        return;
+    }
 
     if (!selectedCell) {
         return;
@@ -466,7 +528,6 @@ function handleKeyboardInput(event) {
 
     moveNext();
 
-    window.scrollTo(scrollX, scrollY);
 }
 
 
@@ -485,14 +546,22 @@ function moveNext() {
     const index =
         cells.indexOf(selectedCell);
 
-    if (
-        index !== -1 &&
-        index + 1 < cells.length
-    ) {
+    let nextIndex =
+        index + 1;
 
-        selectCell(
-            cells[index + 1]
-        );
+    while (nextIndex < cells.length) {
+
+        const nextCell =
+            cells[nextIndex];
+
+        if (!nextCell.classList.contains("hint")) {
+
+            selectCell(nextCell);
+
+            return;
+        }
+
+        nextIndex++;
     }
 }
 
@@ -514,6 +583,21 @@ function handleKeyDown(event) {
 
         event.preventDefault();
 
+
+        /*
+        Vihjeruutua ei voi muuttaa.
+        */
+
+        if (selectedCell.classList.contains("hint")) {
+            return;
+        }
+
+
+        /*
+        Jos nykyisessä ruudussa on kirjain,
+        poistetaan se.
+        */
+
         if (selectedCell.dataset.value) {
 
             delete selectedCell.dataset.value;
@@ -534,32 +618,54 @@ function handleKeyDown(event) {
         }
 
 
+        /*
+        Nykyinen ruutu on tyhjä.
+        Etsitään edellinen normaali ruutu.
+        */
+
         const cells =
             [...document.querySelectorAll(".cell.input")];
 
-        const index =
+        let index =
             cells.indexOf(selectedCell);
 
-        if (index > 0) {
+        index--;
+
+
+        while (index >= 0) {
 
             const previousCell =
-                cells[index - 1];
+                cells[index];
 
-            selectCell(previousCell);
 
-            delete previousCell.dataset.value;
+            /*
+            Ohitetaan vihjeruudut.
+            */
 
-            previousCell.textContent = "";
+            if (
+                !previousCell.classList.contains("hint")
+            ) {
 
-            previousCell.classList.remove(
-                "correct"
-            );
+                selectCell(previousCell);
 
-            previousCell.classList.remove(
-                "wrong"
-            );
+                delete previousCell.dataset.value;
 
-            saveGame();
+                previousCell.textContent = "";
+
+                previousCell.classList.remove(
+                    "correct"
+                );
+
+                previousCell.classList.remove(
+                    "wrong"
+                );
+
+                saveGame();
+
+                return;
+            }
+
+            index--;
         }
 
         return;
@@ -867,3 +973,111 @@ setInterval(() => {
     }
 
 }, 30000);
+
+
+/*
+============================================================
+VIHJE
+============================================================
+*/
+
+function giveHint() {
+
+    const emptyCells =
+        [...document.querySelectorAll(".cell.input")]
+            .filter(cell => !cell.dataset.value);
+
+    if (emptyCells.length === 0) {
+        return;
+    }
+
+    const randomIndex =
+        Math.floor(
+            Math.random() * emptyCells.length
+        );
+
+    const hintCell =
+        emptyCells[randomIndex];
+
+
+    const row =
+        Number(hintCell.dataset.row);
+
+    const column =
+        Number(hintCell.dataset.column);
+
+
+    let expected = null;
+
+
+    if (
+        row >= 2 &&
+        row <= 5 &&
+        column >= 2 &&
+        column <= 5
+    ) {
+
+        const verticalIndex =
+            column - 2;
+
+        const letterIndex =
+            row;
+
+        expected =
+            currentPuzzle.vertical[
+                verticalIndex
+            ][letterIndex].toLowerCase();
+    }
+
+
+    if (!expected) {
+        return;
+    }
+
+
+    hintCell.dataset.value =
+        expected;
+
+    hintCell.textContent =
+        expected.toUpperCase();
+
+    hintCell.classList.add("hint");
+
+    hintCount++;
+
+    saveGame();
+
+}
+
+document
+    .getElementById("hintButton")
+    .addEventListener(
+        "click",
+        giveHint
+    );
+
+document
+    .getElementById("helpButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("helpOverlay")
+                .classList.add("open");
+        }
+    );
+
+
+document
+    .getElementById("closeHelpButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("helpOverlay")
+                .classList.remove("open");
+        }
+    );
+

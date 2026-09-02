@@ -13,13 +13,33 @@
 
     <main class="game">
 
-        <h1>Sanaristi</h1>
+        <div class="titleRow">
+            <div id="dateInfo"></div>
+            <h1>SANARISTI</h1>
+            <button id="helpButton" aria-label="Ohje">?</button>
+        </div>
+
+        <div id="helpOverlay">
+            <div id="helpSection">
+                <button id="closeHelpButton" aria-label="Sulje ohje">×</button>
+
+                <h2>Ohje</h2>
+
+                <p>Ohjeteksti lisätään myöhemmin!</p>
+            </div>
+        </div>
 
         <div id="puzzle"></div>
+
 
         <button id="checkButton">
             TARKISTA
         </button>
+
+        <button id="hintButton">
+            Vihje
+        </button>
+
 
         <div id="message"></div>
 
