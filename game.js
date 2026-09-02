@@ -384,9 +384,13 @@ function focusKeyboard() {
 
     keyboardInput.value = "";
 
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
     keyboardInput.focus({
     preventScroll: true
 });
+window.scrollTo(scrollX, scrollY);
 
 }
 
