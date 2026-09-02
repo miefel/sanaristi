@@ -306,7 +306,7 @@ VIESTI
 
 
 #helpSection p {
-    margin: 0;
+    margin: 0 0 16px;
 
     color: #111111;
 
@@ -316,6 +316,87 @@ VIESTI
 
 
 #closeHelpButton {
+    position: absolute;
+
+    top: 10px;
+    right: 10px;
+
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #eeeeee;
+    color: #111111;
+
+    font-size: 26px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+#successOverlay {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+#successOverlay.open {
+    display: flex;
+}
+
+#successSection {
+    position: relative;
+
+    width: min(100%, 500px);
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    padding: 24px;
+
+    background: #ffffff;
+    color: #111111;
+
+    border-radius: 14px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+    text-align: center;
+}
+
+#successSection h2 {
+    margin: 0 0 20px;
+
+    font-size: 24px;
+}
+
+#successSection p {
+    margin: 0 0 16px;
+
+    color: #111111;
+
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+#closeSuccessButton {
     position: absolute;
 
     top: 10px;

@@ -4,6 +4,7 @@ let puzzles = [];
 let currentPuzzle = null;
 let selectedCell = null;
 let keyboardInput = null;
+let gameSolved = false;
 
 
 /*
@@ -327,6 +328,8 @@ function loadSavedGame() {
 
         if (gameData.solved) {
 
+            gameSolved = true;
+
             cells.forEach(cell => {
 
                 cell.classList.add(
@@ -342,6 +345,12 @@ function loadSavedGame() {
 
             message.className =
                 "correct";
+
+            gameSolved = true;
+
+            inputCells.forEach(cell => {
+                cell.classList.add("locked");
+            });
         }
 
     } catch (error) {
@@ -362,12 +371,14 @@ RUUDUN VALINTA
 
 function selectCell(cell) {
 
-    if (!cell.classList.contains("input")) {
+    if (
+        !cell.classList.contains("input") ||
+        gameSolved ||
+        cell.classList.contains("locked")
+    ) {
         return;
     }
-    if (cell.classList.contains("hint")) {
-        return;
-    }
+
     document
         .querySelectorAll(".cell.input")
         .forEach(cell => {
@@ -471,6 +482,11 @@ KIRJAIMEN SYÖTTÖ
 */
 
 function handleKeyboardInput(event) {
+
+    if (gameSolved) {
+    event.target.value = "";
+    return;
+}
 
     if (
         selectedCell &&
@@ -917,7 +933,18 @@ function checkPuzzle() {
         message.className =
             "correct";
 
+        gameSolved = true;
+
+        inputCells.forEach(cell => {
+            cell.classList.add("locked");
+        });
+
+        document
+            .getElementById("successOverlay")
+            .classList.add("open");
+
     } else {
+
 
         message.textContent =
             "Jotkin kirjaimet ovat väärin.";
@@ -1081,3 +1108,14 @@ document
         }
     );
 
+document
+    .getElementById("closeSuccessButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("successOverlay")
+                .classList.remove("open");
+        }
+    );
