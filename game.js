@@ -350,11 +350,6 @@ function focusKeyboard() {
 
         keyboardInput.inputMode = "text";
 
-        /*
-        Pidetään input visuaalisesti
-        näkymättömänä mutta aktiivisena.
-        */
-
         keyboardInput.style.position = "fixed";
         keyboardInput.style.left = "50%";
         keyboardInput.style.bottom = "10px";
@@ -382,17 +377,54 @@ function focusKeyboard() {
         );
     }
 
-    keyboardInput.value = "";
 
-    lockPagePosition();
+    /*
+    Näppäimistö on jo aktiivinen.
+
+    Älä kohdista fokusta uudelleen jokaisen
+    kirjaimen jälkeen.
+    */
+
+    if (
+        document.activeElement ===
+        keyboardInput
+    ) {
+        return;
+    }
+
+
+    /*
+    Tallennetaan nykyinen sivun paikka.
+    */
+
+    const scrollX =
+        window.scrollX;
+
+    const scrollY =
+        window.scrollY;
+
+
+    keyboardInput.value = "";
 
 
     keyboardInput.focus({
-    preventScroll: true
-});
-restorePagePosition();
+        preventScroll: true
+    });
 
 
+    /*
+    Palautetaan sivu samaan kohtaan
+    näppäimistön avautumisen jälkeen.
+    */
+
+    requestAnimationFrame(() => {
+
+        window.scrollTo(
+            scrollX,
+            scrollY
+        );
+
+    });
 }
 
 
@@ -838,36 +870,3 @@ ALOITA
 
 loadPuzzles();
 
-let lockedScrollX = 0;
-let lockedScrollY = 0;
-let keyboardIsOpen = false;
-
-function lockPagePosition() {
-    lockedScrollX = window.scrollX;
-    lockedScrollY = window.scrollY;
-    keyboardIsOpen = true;
-}
-
-function restorePagePosition() {
-    if (!keyboardIsOpen) {
-        return;
-    }
-
-    window.scrollTo(
-        lockedScrollX,
-        lockedScrollY
-    );
-}
-
-if (window.visualViewport) {
-
-    window.visualViewport.addEventListener(
-        "resize",
-        restorePagePosition
-    );
-
-    window.visualViewport.addEventListener(
-        "scroll",
-        restorePagePosition
-    );
-}
