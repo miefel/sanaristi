@@ -350,16 +350,19 @@ function focusKeyboard() {
 
         keyboardInput.inputMode = "text";
 
-        keyboardInput.style.position = "fixed";
-        keyboardInput.style.left = "50%";
-        keyboardInput.style.bottom = "10px";
+        keyboardInput.style.position = "absolute";
+        keyboardInput.style.left = "0";
+        keyboardInput.style.top = "0";
 
         keyboardInput.style.width = "1px";
         keyboardInput.style.height = "1px";
 
-        keyboardInput.style.opacity = "0.01";
+        keyboardInput.style.opacity = "0";
 
-        keyboardInput.style.zIndex = "-1";
+        keyboardInput.style.pointerEvents = "none";
+
+
+
 
         document.body.appendChild(
             keyboardInput
@@ -397,34 +400,12 @@ function focusKeyboard() {
     Tallennetaan nykyinen sivun paikka.
     */
 
-    const scrollX =
-        window.scrollX;
-
-    const scrollY =
-        window.scrollY;
-
-
     keyboardInput.value = "";
-
 
     keyboardInput.focus({
         preventScroll: true
     });
 
-
-    /*
-    Palautetaan sivu samaan kohtaan
-    näppäimistön avautumisen jälkeen.
-    */
-
-    requestAnimationFrame(() => {
-
-        window.scrollTo(
-            scrollX,
-            scrollY
-        );
-
-    });
 }
 
 
@@ -436,8 +417,6 @@ KIRJAIMEN SYÖTTÖ
 
 function handleKeyboardInput(event) {
 
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
 
     if (!selectedCell) {
         return;
@@ -460,8 +439,6 @@ function handleKeyboardInput(event) {
     if (!/^[a-zåäö]$/i.test(character)) {
 
         event.target.value = "";
-
-        window.scrollTo(scrollX, scrollY);
 
         return;
     }
