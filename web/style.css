@@ -1,0 +1,181 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #ffffff;
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.game {
+    width: min(92vw, 520px);
+    margin: 0 auto;
+    padding: 24px 0 40px;
+}
+
+h1 {
+    margin: 0 0 24px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+#puzzle {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+}
+
+.cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #222222;
+
+    font-size: clamp(18px, 6vw, 32px);
+    font-weight: 700;
+
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/*
+============================================================
+KULMARUUDUT
+============================================================
+
+"-" = ruutu on olemassa, mutta sen reunaviivoja ei näytetä.
+*/
+
+.cell.no-border {
+    border-color: transparent;
+}
+
+
+/*
+============================================================
+KÄYTTÄJÄN TÄYTETTÄVÄT RUUDUT
+============================================================
+*/
+
+.cell.input {
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
+.cell.input.active {
+    background: #dbeafe;
+}
+
+
+/*
+============================================================
+KESKUSTAN 4x4-ALUEEN TUMMA KEHYS
+============================================================
+
+Keskustan koordinaatit ovat:
+
+rivit    2–5
+sarakkeet 2–5
+
+CSS-gridin lapsien numerot:
+
+rivi 3: 19–22
+rivi 4: 27–30
+rivi 5: 35–38
+rivi 6: 43–46
+*/
+
+.cell.input:nth-child(19),
+.cell.input:nth-child(20),
+.cell.input:nth-child(21),
+.cell.input:nth-child(22) {
+    border-top: 3px solid #111111;
+}
+
+.cell.input:nth-child(43),
+.cell.input:nth-child(44),
+.cell.input:nth-child(45),
+.cell.input:nth-child(46) {
+    border-bottom: 3px solid #111111;
+}
+
+.cell.input:nth-child(19),
+.cell.input:nth-child(27),
+.cell.input:nth-child(35),
+.cell.input:nth-child(43) {
+    border-left: 3px solid #111111;
+}
+
+.cell.input:nth-child(22),
+.cell.input:nth-child(30),
+.cell.input:nth-child(38),
+.cell.input:nth-child(46) {
+    border-right: 3px solid #111111;
+}
+
+
+/*
+============================================================
+TARKISTA-NAPPI
+============================================================
+*/
+
+#checkButton {
+    display: block;
+
+    width: 100%;
+    margin-top: 24px;
+    padding: 15px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #111111;
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#checkButton:active {
+    transform: scale(0.98);
+}
+
+
+/*
+============================================================
+VIESTI
+============================================================
+*/
+
+#message {
+    min-height: 24px;
+    margin-top: 16px;
+
+    text-align: center;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+#message.correct {
+    color: #16803c;
+}
+
+#message.wrong {
+    color: #c62828;
+}
