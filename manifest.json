@@ -1,0 +1,20 @@
+{
+    "name": "Sanaristi",
+    "short_name": "Sanaristi",
+    "description": "Päivittäinen suomalainen sanaristi",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "lang": "fi",
+    "orientation": "portrait",
+    "icons": [
+
+    {
+        "src": "./icons/icon-512.png",
+        "sizes": "500x500",
+        "type": "image/png"
+    }
+]
+
+}

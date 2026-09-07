@@ -773,7 +773,7 @@ function updateStartScreenState() {
 
                 gameSolved = true;
 
-                inputCells.forEach(cell => {
+                cells.forEach(cell => {
                     cell.classList.add("locked");
                 });
             }
@@ -1247,169 +1247,179 @@ function updateStartScreenState() {
     ============================================================
     */
 
-    async function checkPuzzle() {
+async function checkPuzzle() {
 
-        const inputCells =
-            [...document.querySelectorAll(".cell.input")];
+    const inputCells =
+        [...document.querySelectorAll(".cell.input")];
 
-        let allCorrect = true;
-        let allFilled = true;
-
-
-        inputCells.forEach(cell => {
-
-            const row =
-                Number(cell.dataset.row);
-
-            const column =
-                Number(cell.dataset.column);
-
-            const actual =
-                (cell.dataset.value || "")
-                    .toLowerCase();
-
-            let expected = null;
+    let allCorrect = true;
+    let allFilled = true;
 
 
-            if (
-                row >= 2 &&
-                row <= 5 &&
-                column >= 2 &&
-                column <= 5
-            ) {
+    inputCells.forEach(cell => {
 
-                const verticalIndex =
-                    column - 2;
+        const row =
+            Number(cell.dataset.row);
 
-                const letterIndex =
-                    row;
+        const column =
+            Number(cell.dataset.column);
 
-                expected =
-                    currentPuzzle.vertical[
-                        verticalIndex
-                    ][letterIndex].toLowerCase();
-            }
+        const actual =
+            (cell.dataset.value || "")
+                .toLowerCase();
+
+        let expected = null;
 
 
-            if (!actual) {
+        if (
+            row >= 2 &&
+            row <= 5 &&
+            column >= 2 &&
+            column <= 5
+        ) {
 
-                allFilled = false;
-                allCorrect = false;
+            const verticalIndex =
+                column - 2;
 
-                cell.classList.remove(
-                    "correct"
-                );
+            const letterIndex =
+                row;
 
-                cell.classList.remove(
-                    "wrong"
-                );
-
-                return;
-            }
-
-
-            if (actual === expected) {
-
-                cell.classList.remove(
-                    "wrong"
-                );
-
-                cell.classList.add(
-                    "correct"
-                );
-
-            } else {
-
-                cell.classList.remove(
-                    "correct"
-                );
-
-                cell.classList.add(
-                    "wrong"
-                );
-
-                allCorrect = false;
-            }
-        });
+            expected =
+                currentPuzzle.vertical[
+                    verticalIndex
+                ][letterIndex].toLowerCase();
+        }
 
 
-        const message =
-            document.getElementById("message");
+        if (!actual) {
 
+            allFilled = false;
+            allCorrect = false;
 
-        if (!allFilled) {
-
-            message.textContent =
-                "Täytä kaikki ruudut.";
-
-            message.className =
-                "wrong";
-
-            saveGame();
+            cell.classList.remove("correct");
+            cell.classList.remove("wrong");
 
             return;
         }
 
 
-        if (allCorrect) {
+        if (actual === expected) {
 
-            message.textContent =
-                "Oikein! 🎉";
+            cell.classList.remove("wrong");
+            cell.classList.add("correct");
 
-            message.className =
-                "correct";
+        } else {
 
-            gameSolved = true;
+            cell.classList.remove("correct");
+            cell.classList.add("wrong");
 
-            const solveData =
-                await reportSolve();
-
-            const solverCount =
-                document.getElementById("solverCount");
-
-            if (solveData && solveData.todaySolves !== undefined) {
-
-                const count =
-                    solveData.todaySolves;
-
-                solverCount.textContent =
-                    `Tänään tämän sanaristin on ratkaissut ${count} ${
-                        count === 1 ? "pelaaja" : "pelaajaa"
-                    }.`;
-            }
-
-            const streak =
-                updateStreak();
-
-            document
-                .getElementById("streakCount")
-                .textContent =
-                    `🔥 ${streak} päivän putki`;
+            allCorrect = false;
+        }
+    });
 
 
-
-                        inputCells.forEach(cell => {
-                            cell.classList.add("locked");
-                        });
-
-                        document
-                            .getElementById("successOverlay")
-                            .classList.add("open");
-
-                    } else {
+    const message =
+        document.getElementById("message");
 
 
-                        message.textContent =
-                            "Jotkin kirjaimet ovat väärin.";
+    if (!allFilled) {
 
-                        message.className =
-                            "wrong";
-                    }
+        message.textContent =
+            "Täytä kaikki ruudut.";
 
+        message.className =
+            "wrong";
 
         saveGame();
+
+        return;
     }
 
+
+    if (allCorrect) {
+
+        message.textContent =
+            "Oikein! 🎉";
+
+        message.className =
+            "correct";
+
+        gameSolved = true;
+
+
+        /*
+        Tallenna ratkaisu palvelimelle
+        */
+
+        const solveData =
+            await reportSolve();
+
+
+        /*
+        Päivitä ratkaistujen pelaajien määrä
+        */
+
+        const solverCount =
+            document.getElementById("solverCount");
+
+        if (
+            solveData &&
+            solveData.todaySolves !== undefined
+        ) {
+
+            const count =
+                solveData.todaySolves;
+
+            solverCount.textContent =
+                `Tänään tämän sanaristin on ratkaissut ${count} ${
+                    count === 1 ? "pelaaja" : "pelaajaa"
+                }.`;
+        }
+
+
+        /*
+        Päivitä putki
+        */
+
+        const streak =
+            updateStreak();
+
+        document
+            .getElementById("streakCount")
+            .textContent =
+                `🔥 ${streak} päivän putki`;
+
+
+        /*
+        Lukitse ruudut
+        */
+
+        inputCells.forEach(cell => {
+            cell.classList.add("locked");
+        });
+
+
+        /*
+        Näytä onnittelupopup
+        */
+
+        document
+            .getElementById("successOverlay")
+            .classList.add("open");
+
+
+    } else {
+
+        message.textContent =
+            "Jotkin kirjaimet ovat väärin.";
+
+        message.className =
+            "wrong";
+    }
+
+
+    saveGame();
+}
 
     /*
     ============================================================
@@ -1659,3 +1669,29 @@ document
 
         }
     );
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", () => {
+
+        navigator.serviceWorker
+            .register("./service-worker.js")
+            .then(registration => {
+
+                console.log(
+                    "Service worker registered:",
+                    registration.scope
+                );
+
+            })
+            .catch(error => {
+
+                console.error(
+                    "Service worker registration failed:",
+                    error
+                );
+
+            });
+
+    });
+
+}
