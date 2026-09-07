@@ -11,8 +11,8 @@
     "icons": [
 
     {
-        "src": "./icons/icon-512.png",
-        "sizes": "500x500",
+        "src": "./icons/SANARIS.png",
+        "sizes": "2000x2000",
         "type": "image/png"
     }
 ]
