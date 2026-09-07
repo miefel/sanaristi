@@ -458,3 +458,133 @@ JAA-TULOS-NAPPI
 #shareButton:active {
     transform: scale(0.98);
 }
+
+/*
+============================================================
+ALOITUSNÄYTTÖ
+============================================================
+*/
+
+#startScreen {
+    width: 100%;
+    min-height: 70vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 40px 20px;
+}
+
+#startScreen h1 {
+    margin: 0 0 10px;
+
+    font-size: 36px;
+    font-weight: 700;
+}
+
+#startDateInfo {
+    margin: 0 0 30px;
+
+    color: #666666;
+
+    font-size: 15px;
+}
+
+#playButton {
+    display: block;
+
+    width: 100%;
+    max-width: 300px;
+
+    margin: 0 auto 20px;
+    padding: 15px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #111111;
+    color: #ffffff;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#playButton:active {
+    transform: scale(0.98);
+}
+
+#startStreak {
+    margin: 0 0 24px;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#startHelpButton {
+    padding: 9px 18px;
+
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #333333;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+#startHelpButton:active {
+    transform: scale(0.98);
+}
+
+
+/*
+============================================================
+PELI PIILOON ALOITUKSESSA
+============================================================
+*/
+
+#gameContent {
+    display: none;
+}
+#startStatus {
+    margin: 0 0 20px;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    line-height: 1.5;
+}
+
+#solutionButton {
+    display: none;
+
+    width: 100%;
+    max-width: 300px;
+
+    margin: 0 auto 20px;
+    padding: 15px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #111111;
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#solutionButton:active {
+    transform: scale(0.98);
+}

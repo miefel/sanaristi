@@ -12,134 +12,161 @@
 <body>
 
     <main class="game">
-
-        <div class="titleRow">
-
-            <div id="dateInfo"></div>
+        <div id="startScreen">
 
             <h1>SANARISTI</h1>
 
-            <button id="helpButton" aria-label="Ohje">
-                ?
+            <p id="startDateInfo"></p>
+
+            <div id="startStatus"></div>
+
+            <button id="playButton">
+                PELAA
+            </button>
+
+            <button id="solutionButton">
+                Katso ratkaisu
+            </button>
+
+            <p id="startStreak"></p>
+
+            <button id="startHelpButton">
+                Miten pelataan?
             </button>
 
         </div>
 
-
         <!-- OHJEPOPUP -->
 
-        <div id="helpOverlay">
+            <div id="helpOverlay">
 
-            <div id="helpSection">
+                <div id="helpSection">
 
-                <button
-                    id="closeHelpButton"
-                    aria-label="Sulje ohje">
-                    ×
-                </button>
+                    <button
+                        id="closeHelpButton"
+                        aria-label="Sulje ohje">
+                        ×
+                    </button>
 
-                <h2>Ohje</h2>
+                    <h2>Ohje</h2>
 
-                <p>
-                    Sanaristissä muodostetaan 8-kirjaimisia sanoja
-                    täyttämällä keskimmäiset kirjaimet.
-                    Sanat muodostuvat pysty- ja vaakasuunnassa.
-                </p>
+                    <p>
+                        Sanaristissä muodostetaan 8-kirjaimisia sanoja
+                        täyttämällä keskimmäiset kirjaimet.
+                        Sanat muodostuvat pysty- ja vaakasuunnassa.
+                    </p>
 
-                <p>
-                    Täytä tyhjät ruudut kirjaimilla niin,
-                    että muodostuvat sanat ovat oikein.
-                    Lopuksi paina <strong>TARKISTA</strong>.
-                </p>
+                    <p>
+                        Täytä tyhjät ruudut kirjaimilla niin,
+                        että muodostuvat sanat ovat oikein.
+                        Lopuksi paina <strong>TARKISTA</strong>.
+                    </p>
 
-                <p>
-                    Jos tarvitset apua, voit käyttää
-                    <strong>Vihje</strong>-painiketta.
-                    Vihje paljastaa satunnaisesti yhden puuttuvan
-                    kirjaimen, eikä paljastettua kirjainta voi
-                    enää muuttaa.
-                </p>
+                    <p>
+                        Jos tarvitset apua, voit käyttää
+                        <strong>Vihje</strong>-painiketta.
+                        Vihje paljastaa satunnaisesti yhden puuttuvan
+                        kirjaimen, eikä paljastettua kirjainta voi
+                        enää muuttaa.
+                    </p>
 
-                <p>
-                    Vihjeitä voi käyttää niin monta kuin haluat.
-                </p>
+                    <p>
+                        Vihjeitä voi käyttää niin monta kuin haluat.
+                    </p>
 
-                <p>
-                    Kun kaikki ruudut on täytetty, paina
-                    <strong>TARKISTA</strong>.
-                    Jos kaikki kirjaimet ovat oikein,
-                    sanaristi on ratkaistu.
-                </p>
+                    <p>
+                        Kun kaikki ruudut on täytetty, paina
+                        <strong>TARKISTA</strong>.
+                        Jos kaikki kirjaimet ovat oikein,
+                        sanaristi on ratkaistu.
+                    </p>
 
-                <p>
-                    Uusi sanaristi tulee joka päivä keskiyöllä.
-                </p>
+                    <p>
+                        Uusi sanaristi tulee joka päivä keskiyöllä.
+                    </p>
+
+                </div>
 
             </div>
 
-        </div>
 
+        <div id="gameContent">
 
-        <!-- ONNITTELUPOPUP -->
+            <div class="titleRow">
 
-        <div id="successOverlay">
+                <div id="dateInfo"></div>
 
-            <div id="successSection">
+                <h1>SANARISTI</h1>
 
-                <button
-                    id="closeSuccessButton"
-                    aria-label="Sulje">
-                    ×
-                </button>
-
-                <h2>🎉 Onneksi olkoon!</h2>
-
-                <p>
-                    Ratkaisit tämän päivän sanaristin!
-                </p>
-
-                <p id="solverCount">
-                    Haetaan tämän päivän ratkaisut...
-                </p>
-
-                <p id="streakCount"></p>
-
-                <p>
-                    Huomenna odottaa uusi sanaristi.
-                </p>
-
-                <button id="shareButton">
-                    Jaa tuloksesi
+                <button id="helpButton" aria-label="Ohje">
+                    ?
                 </button>
 
             </div>
 
+
+
+
+            <!-- ONNITTELUPOPUP -->
+
+            <div id="successOverlay">
+
+                <div id="successSection">
+
+                    <button
+                        id="closeSuccessButton"
+                        aria-label="Sulje">
+                        ×
+                    </button>
+
+                    <h2>🎉 Onneksi olkoon!</h2>
+
+                    <p>
+                        Ratkaisit tämän päivän sanaristin!
+                    </p>
+
+                    <p id="solverCount">
+                        Haetaan tämän päivän ratkaisut...
+                    </p>
+
+                    <p id="streakCount"></p>
+
+                    <p>
+                        Huomenna odottaa uusi sanaristi.
+                    </p>
+
+                    <button id="shareButton">
+                        Jaa tuloksesi
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- SANARISTI -->
+
+            <div id="puzzle"></div>
+
+
+            <!-- TARKISTA -->
+
+            <button id="checkButton">
+                TARKISTA
+            </button>
+
+
+            <!-- VIHJE -->
+
+            <button id="hintButton">
+                Vihje
+            </button>
+
+
+            <!-- VIESTI -->
+
+            <div id="message"></div>
         </div>
-
-
-        <!-- SANARISTI -->
-
-        <div id="puzzle"></div>
-
-
-        <!-- TARKISTA -->
-
-        <button id="checkButton">
-            TARKISTA
-        </button>
-
-
-        <!-- VIHJE -->
-
-        <button id="hintButton">
-            Vihje
-        </button>
-
-
-        <!-- VIESTI -->
-
-        <div id="message"></div>
-
     </main>
 
 

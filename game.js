@@ -55,7 +55,7 @@
         const dateInfo =
             document.getElementById("dateInfo");
 
-        const today =
+        /*const today =
             new Date();
 
         const options = {
@@ -68,14 +68,42 @@
             today.toLocaleDateString(
                 "fi-FI",
                 options
-            );
+            );*/
 
         const puzzleNumber =
             getDayNumber() + 1;
 
         dateInfo.textContent =
-            `${dateText} · #${puzzleNumber}`;
+            //`${dateText} · #${puzzleNumber}`;
+            `#${puzzleNumber}`;
     }
+
+function updateStartScreen() {
+
+    const startDateInfo =
+        document.getElementById("startDateInfo");
+
+    const today =
+        new Date();
+
+    const options = {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    };
+
+    const dateText =
+        today.toLocaleDateString(
+            "fi-FI",
+            options
+        );
+
+    const puzzleNumber =
+        getDayNumber() + 1;
+
+    startDateInfo.textContent =
+        `${dateText} · #${puzzleNumber}`;
+}
 
     /*
 ============================================================
@@ -266,6 +294,86 @@ function updateStreak() {
     return streak;
 }
 
+function getCurrentStreak() {
+
+    const saved =
+        localStorage.getItem(STREAK_KEY);
+
+    if (!saved) {
+        return 0;
+    }
+
+    try {
+
+        const data =
+            JSON.parse(saved);
+
+        const today =
+            getDayNumber();
+
+        const lastDay =
+            data.lastDay;
+
+        const streak =
+            data.streak || 0;
+
+
+        /*
+        Jos pelaaja ratkaisi tänään,
+        putki on edelleen voimassa.
+        */
+
+        if (lastDay === today) {
+            return streak;
+        }
+
+
+        /*
+        Jos pelaaja ratkaisi eilen,
+        putki on edelleen voimassa.
+        */
+
+        if (lastDay === today - 1) {
+            return streak;
+        }
+
+
+        /*
+        Muuten putki on katkennut.
+        */
+
+        return 0;
+
+    } catch (error) {
+
+        console.error(
+            "Putken lukeminen epäonnistui:",
+            error
+        );
+
+        return 0;
+    }
+}
+function updateStartStreak() {
+
+    const startStreak =
+        document.getElementById("startStreak");
+
+    const streak =
+        getCurrentStreak();
+
+    if (streak > 0) {
+
+        startStreak.textContent =
+            `🔥 ${streak} päivän putki`;
+
+    } else {
+
+        startStreak.textContent =
+            "🔥 Aloita putkesi!";
+    }
+}
+
 /*
 ============================================================
 JAA TULOS
@@ -319,7 +427,75 @@ https://miefel.github.io/sanaristi/`;
         }
     }
 }
+function updateStartScreenState() {
 
+    const saved =
+        localStorage.getItem(STORAGE_KEY);
+
+    const playButton =
+        document.getElementById("playButton");
+
+    const solutionButton =
+        document.getElementById("solutionButton");
+
+    const startStatus =
+        document.getElementById("startStatus");
+
+
+    let solvedToday = false;
+
+
+    if (saved) {
+
+        try {
+
+            const gameData =
+                JSON.parse(saved);
+
+            if (
+                gameData.puzzleId === currentPuzzle.id &&
+                gameData.solved === true
+            ) {
+
+                solvedToday = true;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Tallennetun pelin lukeminen epäonnistui:",
+                error
+            );
+        }
+    }
+
+
+    if (solvedToday) {
+
+        const streak =
+            getCurrentStreak();
+
+        startStatus.innerHTML =
+            `Päivän sanaristi ratkaistu!<br>`;
+
+        playButton.style.display =
+            "none";
+
+        solutionButton.style.display =
+            "block";
+
+    } else {
+
+        startStatus.textContent =
+            "";
+
+        playButton.style.display =
+            "block";
+
+        solutionButton.style.display =
+            "none";
+    }
+}
 
     /*
     ============================================================
@@ -343,6 +519,9 @@ https://miefel.github.io/sanaristi/`;
         loadSavedGame();
 
         updateDateInfo();
+        updateStartScreen();
+        updateStartStreak();
+        updateStartScreenState();
     }
 
 
@@ -1427,5 +1606,56 @@ document
             }
 
             shareResult(streak);
+        }
+    );
+
+/*
+============================================================
+ALOITUSNÄYTTÖ
+============================================================
+*/
+
+document
+    .getElementById("playButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("startScreen")
+                .style.display = "none";
+
+            document
+                .getElementById("gameContent")
+                .style.display = "block";
+
+        }
+    );
+document
+    .getElementById("startHelpButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("helpOverlay")
+                .classList.add("open");
+
+        }
+    );
+document
+    .getElementById("solutionButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById("startScreen")
+                .style.display = "none";
+
+            document
+                .getElementById("gameContent")
+                .style.display = "block";
+
         }
     );
