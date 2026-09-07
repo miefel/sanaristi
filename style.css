@@ -422,3 +422,39 @@ VIESTI
 
     cursor: pointer;
 }
+
+/*
+============================================================
+JAA-TULOS-NAPPI
+============================================================
+*/
+
+#shareButton {
+    display: block;
+
+    width: 100%;
+    margin: 8px 0 20px;
+    padding: 15px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #111111;
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: transform 0.1s ease,
+                background 0.15s ease;
+}
+
+#shareButton:hover {
+    background: #333333;
+}
+
+#shareButton:active {
+    transform: scale(0.98);
+}

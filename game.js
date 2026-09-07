@@ -266,6 +266,60 @@ function updateStreak() {
     return streak;
 }
 
+/*
+============================================================
+JAA TULOS
+============================================================
+*/
+
+async function shareResult(streak) {
+
+    const puzzleNumber =
+        getDayNumber() + 1;
+
+    const shareText =
+`🧩 Sanaristi #${puzzleNumber}
+
+✅ Ratkaistu
+💡 ${hintCount} ${hintCount === 1 ? "vihje" : "vihjettä"}
+🔥 ${streak} päivän putki
+
+https://miefel.github.io/sanaristi/`;
+
+    try {
+
+        if (navigator.share) {
+
+            await navigator.share({
+                title: `Sanaristi #${puzzleNumber}`,
+                text: shareText
+            });
+
+        } else {
+
+            await navigator.clipboard.writeText(
+                shareText
+            );
+
+            alert(
+                "Tuloksesi on kopioitu leikepöydälle!"
+            );
+        }
+
+    } catch (error) {
+
+        // User cancelled the share dialog.
+        // Don't show an error in that case.
+        if (error.name !== "AbortError") {
+
+            console.error(
+                "Jakaminen epäonnistui:",
+                error
+            );
+        }
+    }
+}
+
 
     /*
     ============================================================
@@ -1339,3 +1393,39 @@ function updateStreak() {
                     .classList.remove("open");
             }
         );
+
+document
+    .getElementById("shareButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            const saved =
+                localStorage.getItem(
+                    STREAK_KEY
+                );
+
+            let streak = 1;
+
+            if (saved) {
+
+                try {
+
+                    const data =
+                        JSON.parse(saved);
+
+                    streak =
+                        data.streak || 1;
+
+                } catch (error) {
+
+                    console.error(
+                        "Putken lukeminen epäonnistui:",
+                        error
+                    );
+                }
+            }
+
+            shareResult(streak);
+        }
+    );
