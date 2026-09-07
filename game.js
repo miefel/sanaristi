@@ -1,344 +1,1124 @@
-const puzzleElement = document.getElementById("puzzle");
+    const puzzleElement = document.getElementById("puzzle");
 
-let puzzles = [];
-let currentPuzzle = null;
-let selectedCell = null;
-let keyboardInput = null;
-let gameSolved = false;
-
-
-/*
-============================================================
-ASETUKSET
-============================================================
-*/
-
-const START_DATE = new Date("2026-09-02T00:00:00");
-
-const STORAGE_KEY = "sanaristi_peli";
-
-let hintCount = 0;
+    let puzzles = [];
+    let currentPuzzle = null;
+    let selectedCell = null;
+    let keyboardInput = null;
+    let gameSolved = false;
 
 
-/*
-============================================================
-PÄIVÄN NUMERO
-============================================================
-*/
+    /*
+    ============================================================
+    ASETUKSET
+    ============================================================
+    */
 
-function getDayNumber() {
+    const START_DATE = new Date("2026-09-02T00:00:00");
 
-    const today = new Date();
+    const STORAGE_KEY = "sanaristi_peli";
 
-    const todayDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-    );
+    let hintCount = 0;
 
-    const startDate = new Date(
-        START_DATE.getFullYear(),
-        START_DATE.getMonth(),
-        START_DATE.getDate()
-    );
 
-    const difference =
-        todayDate.getTime() - startDate.getTime();
+    /*
+    ============================================================
+    PÄIVÄN NUMERO
+    ============================================================
+    */
 
-    return Math.floor(
-        difference / (1000 * 60 * 60 * 24)
-    );
-}
+    function getDayNumber() {
 
-function updateDateInfo() {
+        const today = new Date();
 
-    const dateInfo =
-        document.getElementById("dateInfo");
-
-    const today =
-        new Date();
-
-    const options = {
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-    };
-
-    const dateText =
-        today.toLocaleDateString(
-            "fi-FI",
-            options
+        const todayDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
         );
 
-    const puzzleNumber =
-        getDayNumber() + 1;
+        const startDate = new Date(
+            START_DATE.getFullYear(),
+            START_DATE.getMonth(),
+            START_DATE.getDate()
+        );
 
-    dateInfo.textContent =
-        `${dateText} · #${puzzleNumber}`;
-}
+        const difference =
+            todayDate.getTime() - startDate.getTime();
 
-/*
-============================================================
-PÄIVÄN SANARISTI
-============================================================
-*/
-
-function selectDailyPuzzle() {
-
-    const dayNumber = getDayNumber();
-
-    const puzzleIndex =
-        ((dayNumber % puzzles.length) + puzzles.length)
-        % puzzles.length;
-
-    currentPuzzle =
-        puzzles[puzzleIndex];
-
-    createGrid();
-
-    loadSavedGame();
-
-    updateDateInfo();
-}
-
-
-/*
-============================================================
-PUZZLEN LATAUS
-============================================================
-*/
-
-async function loadPuzzles() {
-
-    try {
-
-        const response =
-            await fetch("sanaristit/sanaristit.json");
-
-        if (!response.ok) {
-
-            throw new Error(
-                "HTTP-virhe: " + response.status
-            );
-        }
-
-        puzzles =
-            await response.json();
-
-        if (!puzzles.length) {
-
-            throw new Error(
-                "sanaristit.json on tyhjä."
-            );
-        }
-
-        selectDailyPuzzle();
-
-    } catch (error) {
-
-        console.error("VIRHE:", error);
-
-        document.getElementById("message").textContent =
-            "Ristikon lataaminen epäonnistui.";
+        return Math.floor(
+            difference / (1000 * 60 * 60 * 24)
+        );
     }
-}
 
+    function updateDateInfo() {
 
-/*
-============================================================
-RUUDUKON LUONTI
-============================================================
-*/
+        const dateInfo =
+            document.getElementById("dateInfo");
 
-function createGrid() {
+        const today =
+            new Date();
 
-    puzzleElement.innerHTML = "";
+        const options = {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        };
 
-    currentPuzzle.grid.forEach(
-        (row, rowIndex) => {
-
-            [...row].forEach(
-                (value, columnIndex) => {
-
-                    const cell =
-                        document.createElement("div");
-
-                    cell.classList.add("cell");
-
-                    cell.dataset.row =
-                        rowIndex;
-
-                    cell.dataset.column =
-                        columnIndex;
-
-
-                    if (value === "-") {
-
-                        cell.classList.add(
-                            "no-border"
-                        );
-
-                    } else if (value === ".") {
-
-                        cell.classList.add(
-                            "input"
-                        );
-
-                        cell.addEventListener(
-                            "click",
-                            () => selectCell(cell)
-                        );
-
-                    } else {
-
-                        cell.textContent =
-                            value.toUpperCase();
-                    }
-
-                    puzzleElement.appendChild(cell);
-                }
+        const dateText =
+            today.toLocaleDateString(
+                "fi-FI",
+                options
             );
-        }
-    );
-}
 
+        const puzzleNumber =
+            getDayNumber() + 1;
 
-/*
+        dateInfo.textContent =
+            `${dateText} · #${puzzleNumber}`;
+    }
+
+    /*
 ============================================================
-TALLENNA PELI
+TILASTOT
 ============================================================
 */
 
-function saveGame() {
+const STATS_URL =
+    "https://sanaristi-stats.miefel.workers.dev";
+
+function reportPlay() {
 
     if (!currentPuzzle) {
         return;
     }
 
-    const cells =
-        [...document.querySelectorAll(".cell.input")];
+    const playKey =
+        `sanaristi_play_${currentPuzzle.id}`;
 
-    const values = {};
+    // Don't count the same puzzle twice
+    // in the same browser.
+    if (localStorage.getItem(playKey)) {
+        return;
+    }
 
-    cells.forEach(cell => {
+    localStorage.setItem(playKey, "true");
 
-        const key =
-            `${cell.dataset.row},${cell.dataset.column}`;
-
-        values[key] = {
-            value: cell.dataset.value || "",
-            hint: cell.classList.contains("hint")
-        };
+    fetch(`${STATS_URL}/play`, {
+        method: "POST"
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Play recorded:", data);
+    })
+    .catch(error => {
+        console.error(
+            "Statistics error:",
+            error
+        );
     });
+}
 
+async function reportSolve() {
 
-    const gameData = {
+    if (!currentPuzzle) {
+        return null;
+    }
 
-        puzzleId:
-            currentPuzzle.id,
+    const solveKey =
+        `sanaristi_solve_${currentPuzzle.id}`;
 
-        values:
-            values,
+    // Don't count the same puzzle twice
+    // in the same browser.
+    if (localStorage.getItem(solveKey)) {
+        return null;
+    }
 
-        solved:
-            document
-                .getElementById("message")
-                .classList.contains("correct")
-    };
+    localStorage.setItem(solveKey, "true");
 
+    try {
 
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(gameData)
-    );
+        const response =
+            await fetch(`${STATS_URL}/solve`, {
+                method: "POST"
+            });
+
+        const data =
+            await response.json();
+
+        console.log(
+            "Solve recorded:",
+            data
+        );
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "Statistics error:",
+            error
+        );
+
+        return null;
+    }
+}
+
+async function loadSolverCount() {
+
+    try {
+
+        const response =
+            await fetch(`${STATS_URL}/stats`);
+
+        const data =
+            await response.json();
+
+        const solverCount =
+            document.getElementById("solverCount");
+
+        if (
+            data.todaySolves !== undefined
+        ) {
+
+            const count =
+                data.todaySolves;
+
+            solverCount.textContent =
+                `Tänään tämän sanaristin on ratkaissut ${count} ${
+                    count === 1 ? "pelaaja" : "pelaajaa"
+                }.`;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Statistics error:",
+            error
+        );
+    }
 }
 
 
 /*
 ============================================================
-LATAA TALLENNETTU PELI
+PUTKI
 ============================================================
 */
 
-function loadSavedGame() {
+const STREAK_KEY = "sanaristi_streak";
+
+function updateStreak() {
+
+    const today =
+        getDayNumber();
 
     const saved =
-        localStorage.getItem(STORAGE_KEY);
+        localStorage.getItem(STREAK_KEY);
 
-    if (!saved) {
-        return;
+    let streak = 1;
+
+    if (saved) {
+
+        try {
+
+            const data =
+                JSON.parse(saved);
+
+            const lastDay =
+                data.lastDay;
+
+            const previousStreak =
+                data.streak || 0;
+
+            if (lastDay === today) {
+
+                // Already solved today.
+                streak = previousStreak;
+
+            } else if (lastDay === today - 1) {
+
+                // Solved yesterday.
+                streak = previousStreak + 1;
+
+            } else {
+
+                // Missed one or more days.
+                streak = 1;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Putken lataaminen epäonnistui:",
+                error
+            );
+        }
     }
 
-    try {
+    localStorage.setItem(
+        STREAK_KEY,
+        JSON.stringify({
+            lastDay: today,
+            streak: streak
+        })
+    );
 
-        const gameData =
-            JSON.parse(saved);
+    return streak;
+}
 
 
-        if (
-            gameData.puzzleId !==
-            currentPuzzle.id
-        ) {
+    /*
+    ============================================================
+    PÄIVÄN SANARISTI
+    ============================================================
+    */
+
+    function selectDailyPuzzle() {
+
+        const dayNumber = getDayNumber();
+
+        const puzzleIndex =
+            ((dayNumber % puzzles.length) + puzzles.length)
+            % puzzles.length;
+
+        currentPuzzle =
+            puzzles[puzzleIndex];
+
+        createGrid();
+
+        loadSavedGame();
+
+        updateDateInfo();
+    }
+
+
+    /*
+    ============================================================
+    PUZZLEN LATAUS
+    ============================================================
+    */
+
+    async function loadPuzzles() {
+
+        try {
+
+            const response =
+                await fetch("sanaristit/sanaristit.json");
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP-virhe: " + response.status
+                );
+            }
+
+            puzzles =
+                await response.json();
+
+            if (!puzzles.length) {
+
+                throw new Error(
+                    "sanaristit.json on tyhjä."
+                );
+            }
+
+            selectDailyPuzzle();
+
+        } catch (error) {
+
+            console.error("VIRHE:", error);
+
+            document.getElementById("message").textContent =
+                "Ristikon lataaminen epäonnistui.";
+        }
+    }
+
+
+    /*
+    ============================================================
+    RUUDUKON LUONTI
+    ============================================================
+    */
+
+    function createGrid() {
+
+        puzzleElement.innerHTML = "";
+
+        currentPuzzle.grid.forEach(
+            (row, rowIndex) => {
+
+                [...row].forEach(
+                    (value, columnIndex) => {
+
+                        const cell =
+                            document.createElement("div");
+
+                        cell.classList.add("cell");
+
+                        cell.dataset.row =
+                            rowIndex;
+
+                        cell.dataset.column =
+                            columnIndex;
+
+
+                        if (value === "-") {
+
+                            cell.classList.add(
+                                "no-border"
+                            );
+
+                        } else if (value === ".") {
+
+                            cell.classList.add(
+                                "input"
+                            );
+
+                            cell.addEventListener(
+                                "click",
+                                () => selectCell(cell)
+                            );
+
+                        } else {
+
+                            cell.textContent =
+                                value.toUpperCase();
+                        }
+
+                        puzzleElement.appendChild(cell);
+                    }
+                );
+            }
+        );
+    }
+
+
+    /*
+    ============================================================
+    TALLENNA PELI
+    ============================================================
+    */
+
+    function saveGame() {
+
+        if (!currentPuzzle) {
             return;
         }
-
 
         const cells =
             [...document.querySelectorAll(".cell.input")];
 
-        hintCount = 0;
+        const values = {};
 
         cells.forEach(cell => {
 
             const key =
                 `${cell.dataset.row},${cell.dataset.column}`;
 
-            const savedCell =
-                gameData.values[key];
-
-            if (savedCell) {
-
-                if (typeof savedCell === "string") {
-
-                    cell.dataset.value =
-                        savedCell;
-
-                    cell.textContent =
-                        savedCell.toUpperCase();
-
-                } else if (savedCell.value) {
-
-                    cell.dataset.value =
-                        savedCell.value;
-
-                    cell.textContent =
-                        savedCell.value.toUpperCase();
-
-                    if (savedCell.hint) {
-
-                        cell.classList.add("hint");
-                        hintCount++;
-                    }
-                }
-            }
-
+            values[key] = {
+                value: cell.dataset.value || "",
+                hint: cell.classList.contains("hint")
+            };
         });
 
 
+        const gameData = {
 
-        if (gameData.solved) {
+            puzzleId:
+                currentPuzzle.id,
 
-            gameSolved = true;
+            values:
+                values,
+
+            solved:
+                document
+                    .getElementById("message")
+                    .classList.contains("correct")
+        };
+
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(gameData)
+        );
+    }
+
+
+    /*
+    ============================================================
+    LATAA TALLENNETTU PELI
+    ============================================================
+    */
+
+    function loadSavedGame() {
+
+        const saved =
+            localStorage.getItem(STORAGE_KEY);
+
+        if (!saved) {
+            return;
+        }
+
+        try {
+
+            const gameData =
+                JSON.parse(saved);
+
+
+            if (
+                gameData.puzzleId !==
+                currentPuzzle.id
+            ) {
+                return;
+            }
+
+
+            const cells =
+                [...document.querySelectorAll(".cell.input")];
+
+            hintCount = 0;
 
             cells.forEach(cell => {
+
+                const key =
+                    `${cell.dataset.row},${cell.dataset.column}`;
+
+                const savedCell =
+                    gameData.values[key];
+
+                if (savedCell) {
+
+                    if (typeof savedCell === "string") {
+
+                        cell.dataset.value =
+                            savedCell;
+
+                        cell.textContent =
+                            savedCell.toUpperCase();
+
+                    } else if (savedCell.value) {
+
+                        cell.dataset.value =
+                            savedCell.value;
+
+                        cell.textContent =
+                            savedCell.value.toUpperCase();
+
+                        if (savedCell.hint) {
+
+                            cell.classList.add("hint");
+                            hintCount++;
+                        }
+                    }
+                }
+
+            });
+
+
+
+            if (gameData.solved) {
+
+                gameSolved = true;
+
+                loadSolverCount();
+
+                cells.forEach(cell => {
+
+                    cell.classList.add(
+                        "correct"
+                    );
+                });
+
+                const message =
+                    document.getElementById("message");
+
+                message.textContent =
+                    "Oikein! 🎉";
+
+                message.className =
+                    "correct";
+
+                gameSolved = true;
+
+                inputCells.forEach(cell => {
+                    cell.classList.add("locked");
+                });
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Tallennetun pelin lataaminen epäonnistui:",
+                error
+            );
+        }
+    }
+
+
+    /*
+    ============================================================
+    RUUDUN VALINTA
+    ============================================================
+    */
+
+    function selectCell(cell) {
+
+        if (
+            !cell.classList.contains("input") ||
+            gameSolved ||
+            cell.classList.contains("locked")
+        ) {
+            return;
+        }
+        reportPlay();
+
+        document
+            .querySelectorAll(".cell.input")
+            .forEach(cell => {
+
+                cell.classList.remove("active");
+            });
+
+        selectedCell = cell;
+
+        selectedCell.classList.add("active");
+
+        focusKeyboard();
+    }
+
+
+    /*
+    ============================================================
+    NÄPPÄIMISTÖ
+    ============================================================
+    */
+
+    function focusKeyboard() {
+
+        if (!keyboardInput) {
+
+            keyboardInput =
+                document.createElement("input");
+
+            keyboardInput.type = "text";
+
+            keyboardInput.autocomplete = "off";
+            keyboardInput.autocorrect = "off";
+            keyboardInput.autocapitalize = "none";
+            keyboardInput.spellcheck = false;
+
+            keyboardInput.inputMode = "text";
+
+            keyboardInput.style.position = "absolute";
+            keyboardInput.style.left = "0";
+            keyboardInput.style.top = "0";
+
+            keyboardInput.style.width = "1px";
+            keyboardInput.style.height = "1px";
+
+            keyboardInput.style.opacity = "0";
+
+            keyboardInput.style.pointerEvents = "none";
+
+
+
+
+            document.body.appendChild(
+                keyboardInput
+            );
+
+
+            keyboardInput.addEventListener(
+                "input",
+                handleKeyboardInput
+            );
+
+            keyboardInput.addEventListener(
+                "keydown",
+                handleKeyDown
+            );
+        }
+
+
+        /*
+        Näppäimistö on jo aktiivinen.
+
+        Älä kohdista fokusta uudelleen jokaisen
+        kirjaimen jälkeen.
+        */
+
+        if (
+            document.activeElement ===
+            keyboardInput
+        ) {
+            return;
+        }
+
+
+        /*
+        Tallennetaan nykyinen sivun paikka.
+        */
+
+        keyboardInput.value = "";
+
+        keyboardInput.focus({
+            preventScroll: true
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    KIRJAIMEN SYÖTTÖ
+    ============================================================
+    */
+
+    function handleKeyboardInput(event) {
+
+        if (gameSolved) {
+        event.target.value = "";
+        return;
+    }
+
+        if (
+            selectedCell &&
+            selectedCell.classList.contains("hint")
+        ) {
+            event.target.value = "";
+            return;
+        }
+
+        if (!selectedCell) {
+            return;
+        }
+
+        const value =
+            event.target.value.toLowerCase();
+
+        if (!value) {
+            return;
+        }
+
+        const characters =
+            [...value];
+
+        const character =
+            characters[characters.length - 1];
+
+
+        if (!/^[a-zåäö]$/i.test(character)) {
+
+            event.target.value = "";
+
+            return;
+        }
+
+
+        selectedCell.dataset.value =
+            character;
+
+        selectedCell.textContent =
+            character.toUpperCase();
+
+
+        selectedCell.classList.remove(
+            "correct"
+        );
+
+        selectedCell.classList.remove(
+            "wrong"
+        );
+
+
+        event.target.value = "";
+
+        saveGame();
+
+        moveNext();
+
+    }
+
+
+
+    /*
+    ============================================================
+    SEURAAVA RUUTU
+    ============================================================
+    */
+
+    function moveNext() {
+
+        const cells =
+            [...document.querySelectorAll(".cell.input")];
+
+        const index =
+            cells.indexOf(selectedCell);
+
+        let nextIndex =
+            index + 1;
+
+        while (nextIndex < cells.length) {
+
+            const nextCell =
+                cells[nextIndex];
+
+            if (!nextCell.classList.contains("hint")) {
+
+                selectCell(nextCell);
+
+                return;
+            }
+
+            nextIndex++;
+        }
+    }
+
+
+    /*
+    ============================================================
+    NÄPPÄIMISTÖN NÄPPÄIMET
+    ============================================================
+    */
+
+    function handleKeyDown(event) {
+
+        if (!selectedCell) {
+            return;
+        }
+
+
+        if (event.key === "Backspace") {
+
+            event.preventDefault();
+
+
+            /*
+            Vihjeruutua ei voi muuttaa.
+            */
+
+            if (selectedCell.classList.contains("hint")) {
+                return;
+            }
+
+
+            /*
+            Jos nykyisessä ruudussa on kirjain,
+            poistetaan se.
+            */
+
+            if (selectedCell.dataset.value) {
+
+                delete selectedCell.dataset.value;
+
+                selectedCell.textContent = "";
+
+                selectedCell.classList.remove(
+                    "correct"
+                );
+
+                selectedCell.classList.remove(
+                    "wrong"
+                );
+
+                saveGame();
+
+                return;
+            }
+
+
+            /*
+            Nykyinen ruutu on tyhjä.
+            Etsitään edellinen normaali ruutu.
+            */
+
+            const cells =
+                [...document.querySelectorAll(".cell.input")];
+
+            let index =
+                cells.indexOf(selectedCell);
+
+            index--;
+
+
+            while (index >= 0) {
+
+                const previousCell =
+                    cells[index];
+
+
+                /*
+                Ohitetaan vihjeruudut.
+                */
+
+                if (
+                    !previousCell.classList.contains("hint")
+                ) {
+
+                    selectCell(previousCell);
+
+                    delete previousCell.dataset.value;
+
+                    previousCell.textContent = "";
+
+                    previousCell.classList.remove(
+                        "correct"
+                    );
+
+                    previousCell.classList.remove(
+                        "wrong"
+                    );
+
+                    saveGame();
+
+                    return;
+                }
+
+                index--;
+            }
+
+            return;
+        }
+
+
+        if (event.key === "ArrowLeft") {
+
+            event.preventDefault();
+
+            moveHorizontal(-1);
+
+            return;
+        }
+
+
+        if (event.key === "ArrowRight") {
+
+            event.preventDefault();
+
+            moveHorizontal(1);
+
+            return;
+        }
+
+
+        if (event.key === "ArrowUp") {
+
+            event.preventDefault();
+
+            moveVertical(-1);
+
+            return;
+        }
+
+
+        if (event.key === "ArrowDown") {
+
+            event.preventDefault();
+
+            moveVertical(1);
+
+            return;
+        }
+    }
+
+
+    /*
+    ============================================================
+    VAAKASUUNTAINEN LIIKE
+    ============================================================
+    */
+
+    function moveHorizontal(direction) {
+
+        if (!selectedCell) {
+            return;
+        }
+
+        const row =
+            Number(selectedCell.dataset.row);
+
+        const column =
+            Number(selectedCell.dataset.column);
+
+        let newColumn =
+            column + direction;
+
+        while (
+            newColumn >= 0 &&
+            newColumn < 8
+        ) {
+
+            const cell =
+                document.querySelector(
+                    `.cell.input[data-row="${row}"][data-column="${newColumn}"]`
+                );
+
+            if (cell) {
+
+                selectCell(cell);
+
+                return;
+            }
+
+            newColumn += direction;
+        }
+    }
+
+
+    /*
+    ============================================================
+    PYSTYSUUNTAINEN LIIKE
+    ============================================================
+    */
+
+    function moveVertical(direction) {
+
+        if (!selectedCell) {
+            return;
+        }
+
+        const row =
+            Number(selectedCell.dataset.row);
+
+        const column =
+            Number(selectedCell.dataset.column);
+
+        let newRow =
+            row + direction;
+
+        while (
+            newRow >= 0 &&
+            newRow < 8
+        ) {
+
+            const cell =
+                document.querySelector(
+                    `.cell.input[data-row="${newRow}"][data-column="${column}"]`
+                );
+
+            if (cell) {
+
+                selectCell(cell);
+
+                return;
+            }
+
+            newRow += direction;
+        }
+    }
+
+
+    /*
+    ============================================================
+    TARKISTA RATKAISU
+    ============================================================
+    */
+
+    async function checkPuzzle() {
+
+        const inputCells =
+            [...document.querySelectorAll(".cell.input")];
+
+        let allCorrect = true;
+        let allFilled = true;
+
+
+        inputCells.forEach(cell => {
+
+            const row =
+                Number(cell.dataset.row);
+
+            const column =
+                Number(cell.dataset.column);
+
+            const actual =
+                (cell.dataset.value || "")
+                    .toLowerCase();
+
+            let expected = null;
+
+
+            if (
+                row >= 2 &&
+                row <= 5 &&
+                column >= 2 &&
+                column <= 5
+            ) {
+
+                const verticalIndex =
+                    column - 2;
+
+                const letterIndex =
+                    row;
+
+                expected =
+                    currentPuzzle.vertical[
+                        verticalIndex
+                    ][letterIndex].toLowerCase();
+            }
+
+
+            if (!actual) {
+
+                allFilled = false;
+                allCorrect = false;
+
+                cell.classList.remove(
+                    "correct"
+                );
+
+                cell.classList.remove(
+                    "wrong"
+                );
+
+                return;
+            }
+
+
+            if (actual === expected) {
+
+                cell.classList.remove(
+                    "wrong"
+                );
 
                 cell.classList.add(
                     "correct"
                 );
-            });
 
-            const message =
-                document.getElementById("message");
+            } else {
+
+                cell.classList.remove(
+                    "correct"
+                );
+
+                cell.classList.add(
+                    "wrong"
+                );
+
+                allCorrect = false;
+            }
+        });
+
+
+        const message =
+            document.getElementById("message");
+
+
+        if (!allFilled) {
+
+            message.textContent =
+                "Täytä kaikki ruudut.";
+
+            message.className =
+                "wrong";
+
+            saveGame();
+
+            return;
+        }
+
+
+        if (allCorrect) {
 
             message.textContent =
                 "Oikein! 🎉";
@@ -348,499 +1128,131 @@ function loadSavedGame() {
 
             gameSolved = true;
 
-            inputCells.forEach(cell => {
-                cell.classList.add("locked");
-            });
-        }
+            const solveData =
+                await reportSolve();
 
-    } catch (error) {
+            const solverCount =
+                document.getElementById("solverCount");
 
-        console.error(
-            "Tallennetun pelin lataaminen epäonnistui:",
-            error
-        );
-    }
-}
+            if (solveData && solveData.todaySolves !== undefined) {
 
+                const count =
+                    solveData.todaySolves;
 
-/*
-============================================================
-RUUDUN VALINTA
-============================================================
-*/
-
-function selectCell(cell) {
-
-    if (
-        !cell.classList.contains("input") ||
-        gameSolved ||
-        cell.classList.contains("locked")
-    ) {
-        return;
-    }
-
-    document
-        .querySelectorAll(".cell.input")
-        .forEach(cell => {
-
-            cell.classList.remove("active");
-        });
-
-    selectedCell = cell;
-
-    selectedCell.classList.add("active");
-
-    focusKeyboard();
-}
-
-
-/*
-============================================================
-NÄPPÄIMISTÖ
-============================================================
-*/
-
-function focusKeyboard() {
-
-    if (!keyboardInput) {
-
-        keyboardInput =
-            document.createElement("input");
-
-        keyboardInput.type = "text";
-
-        keyboardInput.autocomplete = "off";
-        keyboardInput.autocorrect = "off";
-        keyboardInput.autocapitalize = "none";
-        keyboardInput.spellcheck = false;
-
-        keyboardInput.inputMode = "text";
-
-        keyboardInput.style.position = "absolute";
-        keyboardInput.style.left = "0";
-        keyboardInput.style.top = "0";
-
-        keyboardInput.style.width = "1px";
-        keyboardInput.style.height = "1px";
-
-        keyboardInput.style.opacity = "0";
-
-        keyboardInput.style.pointerEvents = "none";
-
-
-
-
-        document.body.appendChild(
-            keyboardInput
-        );
-
-
-        keyboardInput.addEventListener(
-            "input",
-            handleKeyboardInput
-        );
-
-        keyboardInput.addEventListener(
-            "keydown",
-            handleKeyDown
-        );
-    }
-
-
-    /*
-    Näppäimistö on jo aktiivinen.
-
-    Älä kohdista fokusta uudelleen jokaisen
-    kirjaimen jälkeen.
-    */
-
-    if (
-        document.activeElement ===
-        keyboardInput
-    ) {
-        return;
-    }
-
-
-    /*
-    Tallennetaan nykyinen sivun paikka.
-    */
-
-    keyboardInput.value = "";
-
-    keyboardInput.focus({
-        preventScroll: true
-    });
-
-}
-
-
-/*
-============================================================
-KIRJAIMEN SYÖTTÖ
-============================================================
-*/
-
-function handleKeyboardInput(event) {
-
-    if (gameSolved) {
-    event.target.value = "";
-    return;
-}
-
-    if (
-        selectedCell &&
-        selectedCell.classList.contains("hint")
-    ) {
-        event.target.value = "";
-        return;
-    }
-
-    if (!selectedCell) {
-        return;
-    }
-
-    const value =
-        event.target.value.toLowerCase();
-
-    if (!value) {
-        return;
-    }
-
-    const characters =
-        [...value];
-
-    const character =
-        characters[characters.length - 1];
-
-
-    if (!/^[a-zåäö]$/i.test(character)) {
-
-        event.target.value = "";
-
-        return;
-    }
-
-
-    selectedCell.dataset.value =
-        character;
-
-    selectedCell.textContent =
-        character.toUpperCase();
-
-
-    selectedCell.classList.remove(
-        "correct"
-    );
-
-    selectedCell.classList.remove(
-        "wrong"
-    );
-
-
-    event.target.value = "";
-
-    saveGame();
-
-    moveNext();
-
-}
-
-
-
-/*
-============================================================
-SEURAAVA RUUTU
-============================================================
-*/
-
-function moveNext() {
-
-    const cells =
-        [...document.querySelectorAll(".cell.input")];
-
-    const index =
-        cells.indexOf(selectedCell);
-
-    let nextIndex =
-        index + 1;
-
-    while (nextIndex < cells.length) {
-
-        const nextCell =
-            cells[nextIndex];
-
-        if (!nextCell.classList.contains("hint")) {
-
-            selectCell(nextCell);
-
-            return;
-        }
-
-        nextIndex++;
-    }
-}
-
-
-/*
-============================================================
-NÄPPÄIMISTÖN NÄPPÄIMET
-============================================================
-*/
-
-function handleKeyDown(event) {
-
-    if (!selectedCell) {
-        return;
-    }
-
-
-    if (event.key === "Backspace") {
-
-        event.preventDefault();
-
-
-        /*
-        Vihjeruutua ei voi muuttaa.
-        */
-
-        if (selectedCell.classList.contains("hint")) {
-            return;
-        }
-
-
-        /*
-        Jos nykyisessä ruudussa on kirjain,
-        poistetaan se.
-        */
-
-        if (selectedCell.dataset.value) {
-
-            delete selectedCell.dataset.value;
-
-            selectedCell.textContent = "";
-
-            selectedCell.classList.remove(
-                "correct"
-            );
-
-            selectedCell.classList.remove(
-                "wrong"
-            );
-
-            saveGame();
-
-            return;
-        }
-
-
-        /*
-        Nykyinen ruutu on tyhjä.
-        Etsitään edellinen normaali ruutu.
-        */
-
-        const cells =
-            [...document.querySelectorAll(".cell.input")];
-
-        let index =
-            cells.indexOf(selectedCell);
-
-        index--;
-
-
-        while (index >= 0) {
-
-            const previousCell =
-                cells[index];
-
-
-            /*
-            Ohitetaan vihjeruudut.
-            */
-
-            if (
-                !previousCell.classList.contains("hint")
-            ) {
-
-                selectCell(previousCell);
-
-                delete previousCell.dataset.value;
-
-                previousCell.textContent = "";
-
-                previousCell.classList.remove(
-                    "correct"
-                );
-
-                previousCell.classList.remove(
-                    "wrong"
-                );
-
-                saveGame();
-
-                return;
+                solverCount.textContent =
+                    `Tänään tämän sanaristin on ratkaissut ${count} ${
+                        count === 1 ? "pelaaja" : "pelaajaa"
+                    }.`;
             }
 
-            index--;
+            const streak =
+                updateStreak();
+
+            document
+                .getElementById("streakCount")
+                .textContent =
+                    `🔥 ${streak} päivän putki`;
+
+
+
+                        inputCells.forEach(cell => {
+                            cell.classList.add("locked");
+                        });
+
+                        document
+                            .getElementById("successOverlay")
+                            .classList.add("open");
+
+                    } else {
+
+
+                        message.textContent =
+                            "Jotkin kirjaimet ovat väärin.";
+
+                        message.className =
+                            "wrong";
+                    }
+
+
+        saveGame();
+    }
+
+
+    /*
+    ============================================================
+    TARKISTA-NAPPI
+    ============================================================
+    */
+
+    document
+        .getElementById("checkButton")
+        .addEventListener(
+            "click",
+            checkPuzzle
+        );
+
+
+    /*
+    ============================================================
+    ALOITA
+    ============================================================
+    */
+
+    loadPuzzles();
+
+    /*
+    ============================================================
+    AUTOMAATTINEN PÄIVÄN VAIHTUMINEN
+    ============================================================
+    */
+
+    let currentDay = getDayNumber();
+
+    setInterval(() => {
+
+        const newDay = getDayNumber();
+
+        if (newDay !== currentDay) {
+
+            currentDay = newDay;
+
+            selectDailyPuzzle();
         }
 
-        return;
-    }
+    }, 30000);
 
 
-    if (event.key === "ArrowLeft") {
+    /*
+    ============================================================
+    VIHJE
+    ============================================================
+    */
 
-        event.preventDefault();
+    function giveHint() {
 
-        moveHorizontal(-1);
+        const emptyCells =
+            [...document.querySelectorAll(".cell.input")]
+                .filter(cell => !cell.dataset.value);
 
-        return;
-    }
-
-
-    if (event.key === "ArrowRight") {
-
-        event.preventDefault();
-
-        moveHorizontal(1);
-
-        return;
-    }
-
-
-    if (event.key === "ArrowUp") {
-
-        event.preventDefault();
-
-        moveVertical(-1);
-
-        return;
-    }
-
-
-    if (event.key === "ArrowDown") {
-
-        event.preventDefault();
-
-        moveVertical(1);
-
-        return;
-    }
-}
-
-
-/*
-============================================================
-VAAKASUUNTAINEN LIIKE
-============================================================
-*/
-
-function moveHorizontal(direction) {
-
-    if (!selectedCell) {
-        return;
-    }
-
-    const row =
-        Number(selectedCell.dataset.row);
-
-    const column =
-        Number(selectedCell.dataset.column);
-
-    let newColumn =
-        column + direction;
-
-    while (
-        newColumn >= 0 &&
-        newColumn < 8
-    ) {
-
-        const cell =
-            document.querySelector(
-                `.cell.input[data-row="${row}"][data-column="${newColumn}"]`
-            );
-
-        if (cell) {
-
-            selectCell(cell);
-
+        if (emptyCells.length === 0) {
             return;
         }
 
-        newColumn += direction;
-    }
-}
-
-
-/*
-============================================================
-PYSTYSUUNTAINEN LIIKE
-============================================================
-*/
-
-function moveVertical(direction) {
-
-    if (!selectedCell) {
-        return;
-    }
-
-    const row =
-        Number(selectedCell.dataset.row);
-
-    const column =
-        Number(selectedCell.dataset.column);
-
-    let newRow =
-        row + direction;
-
-    while (
-        newRow >= 0 &&
-        newRow < 8
-    ) {
-
-        const cell =
-            document.querySelector(
-                `.cell.input[data-row="${newRow}"][data-column="${column}"]`
+        const randomIndex =
+            Math.floor(
+                Math.random() * emptyCells.length
             );
 
-        if (cell) {
+        const hintCell =
+            emptyCells[randomIndex];
 
-            selectCell(cell);
-
-            return;
-        }
-
-        newRow += direction;
-    }
-}
-
-
-/*
-============================================================
-TARKISTA RATKAISU
-============================================================
-*/
-
-function checkPuzzle() {
-
-    const inputCells =
-        [...document.querySelectorAll(".cell.input")];
-
-    let allCorrect = true;
-    let allFilled = true;
-
-
-    inputCells.forEach(cell => {
 
         const row =
-            Number(cell.dataset.row);
+            Number(hintCell.dataset.row);
 
         const column =
-            Number(cell.dataset.column);
+            Number(hintCell.dataset.column);
 
-        const actual =
-            (cell.dataset.value || "")
-                .toLowerCase();
 
         let expected = null;
 
@@ -865,257 +1277,65 @@ function checkPuzzle() {
         }
 
 
-        if (!actual) {
-
-            allFilled = false;
-            allCorrect = false;
-
-            cell.classList.remove(
-                "correct"
-            );
-
-            cell.classList.remove(
-                "wrong"
-            );
-
+        if (!expected) {
             return;
         }
 
 
-        if (actual === expected) {
+        hintCell.dataset.value =
+            expected;
 
-            cell.classList.remove(
-                "wrong"
-            );
+        hintCell.textContent =
+            expected.toUpperCase();
 
-            cell.classList.add(
-                "correct"
-            );
+        hintCell.classList.add("hint");
 
-        } else {
-
-            cell.classList.remove(
-                "correct"
-            );
-
-            cell.classList.add(
-                "wrong"
-            );
-
-            allCorrect = false;
-        }
-    });
-
-
-    const message =
-        document.getElementById("message");
-
-
-    if (!allFilled) {
-
-        message.textContent =
-            "Täytä kaikki ruudut.";
-
-        message.className =
-            "wrong";
+        hintCount++;
 
         saveGame();
 
-        return;
     }
 
-
-    if (allCorrect) {
-
-        message.textContent =
-            "Oikein! 🎉";
-
-        message.className =
-            "correct";
-
-        gameSolved = true;
-
-        inputCells.forEach(cell => {
-            cell.classList.add("locked");
-        });
-
-        document
-            .getElementById("successOverlay")
-            .classList.add("open");
-
-    } else {
-
-
-        message.textContent =
-            "Jotkin kirjaimet ovat väärin.";
-
-        message.className =
-            "wrong";
-    }
-
-
-    saveGame();
-}
-
-
-/*
-============================================================
-TARKISTA-NAPPI
-============================================================
-*/
-
-document
-    .getElementById("checkButton")
-    .addEventListener(
-        "click",
-        checkPuzzle
-    );
-
-
-/*
-============================================================
-ALOITA
-============================================================
-*/
-
-loadPuzzles();
-
-/*
-============================================================
-AUTOMAATTINEN PÄIVÄN VAIHTUMINEN
-============================================================
-*/
-
-let currentDay = getDayNumber();
-
-setInterval(() => {
-
-    const newDay = getDayNumber();
-
-    if (newDay !== currentDay) {
-
-        currentDay = newDay;
-
-        selectDailyPuzzle();
-    }
-
-}, 30000);
-
-
-/*
-============================================================
-VIHJE
-============================================================
-*/
-
-function giveHint() {
-
-    const emptyCells =
-        [...document.querySelectorAll(".cell.input")]
-            .filter(cell => !cell.dataset.value);
-
-    if (emptyCells.length === 0) {
-        return;
-    }
-
-    const randomIndex =
-        Math.floor(
-            Math.random() * emptyCells.length
+    document
+        .getElementById("hintButton")
+        .addEventListener(
+            "click",
+            giveHint
         );
 
-    const hintCell =
-        emptyCells[randomIndex];
+    document
+        .getElementById("helpButton")
+        .addEventListener(
+            "click",
+            () => {
+
+                document
+                    .getElementById("helpOverlay")
+                    .classList.add("open");
+            }
+        );
 
 
-    const row =
-        Number(hintCell.dataset.row);
+    document
+        .getElementById("closeHelpButton")
+        .addEventListener(
+            "click",
+            () => {
 
-    const column =
-        Number(hintCell.dataset.column);
+                document
+                    .getElementById("helpOverlay")
+                    .classList.remove("open");
+            }
+        );
 
+    document
+        .getElementById("closeSuccessButton")
+        .addEventListener(
+            "click",
+            () => {
 
-    let expected = null;
-
-
-    if (
-        row >= 2 &&
-        row <= 5 &&
-        column >= 2 &&
-        column <= 5
-    ) {
-
-        const verticalIndex =
-            column - 2;
-
-        const letterIndex =
-            row;
-
-        expected =
-            currentPuzzle.vertical[
-                verticalIndex
-            ][letterIndex].toLowerCase();
-    }
-
-
-    if (!expected) {
-        return;
-    }
-
-
-    hintCell.dataset.value =
-        expected;
-
-    hintCell.textContent =
-        expected.toUpperCase();
-
-    hintCell.classList.add("hint");
-
-    hintCount++;
-
-    saveGame();
-
-}
-
-document
-    .getElementById("hintButton")
-    .addEventListener(
-        "click",
-        giveHint
-    );
-
-document
-    .getElementById("helpButton")
-    .addEventListener(
-        "click",
-        () => {
-
-            document
-                .getElementById("helpOverlay")
-                .classList.add("open");
-        }
-    );
-
-
-document
-    .getElementById("closeHelpButton")
-    .addEventListener(
-        "click",
-        () => {
-
-            document
-                .getElementById("helpOverlay")
-                .classList.remove("open");
-        }
-    );
-
-document
-    .getElementById("closeSuccessButton")
-    .addEventListener(
-        "click",
-        () => {
-
-            document
-                .getElementById("successOverlay")
-                .classList.remove("open");
-        }
-    );
+                document
+                    .getElementById("successOverlay")
+                    .classList.remove("open");
+            }
+        );
